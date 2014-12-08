@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{14AE07FA-80CE-4233-A0D5-F8DB324135A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScienceContainer", "ScienceContainer\ScienceContainer.csproj", "{C43DA931-F6BF-4576-9DF1-B3D8AAB2785A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{14AE07FA-80CE-4233-A0D5-F8DB324135A1}.Debug|x86.ActiveCfg = Debug|x86
+		{14AE07FA-80CE-4233-A0D5-F8DB324135A1}.Debug|x86.Build.0 = Debug|x86
+		{14AE07FA-80CE-4233-A0D5-F8DB324135A1}.Release|x86.ActiveCfg = Release|x86
+		{14AE07FA-80CE-4233-A0D5-F8DB324135A1}.Release|x86.Build.0 = Release|x86
+		{C43DA931-F6BF-4576-9DF1-B3D8AAB2785A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C43DA931-F6BF-4576-9DF1-B3D8AAB2785A}.Debug|x86.Build.0 = Debug|Any CPU
+		{C43DA931-F6BF-4576-9DF1-B3D8AAB2785A}.Release|x86.ActiveCfg = Release|Any CPU
+		{C43DA931-F6BF-4576-9DF1-B3D8AAB2785A}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = test\test.csproj
+	EndGlobalSection
+EndGlobal
