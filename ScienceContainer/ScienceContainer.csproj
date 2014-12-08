@@ -15,7 +15,7 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>C:\KSP_win\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
+    <OutputPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -24,28 +24,28 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>True</Optimize>
-    <OutputPath>C:\KSP_win\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
+    <OutputPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Assembly-CSharp">
-      <HintPath>C:\KSP_win\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>C:\KSP_win\KSP_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ConfigurableScienceData">
-      <HintPath>C:\KSP_win\GameData\SirDargon\ConfigurableScienceData\Plugins\ConfigurableScienceData.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data" />
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\KSP_Dev_25\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ConfigurableScienceData">
+      <HintPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ConfigurableScienceData\Plugins\ConfigurableScienceData.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\KSP_Dev_25\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -54,4 +54,7 @@
     <Compile Include="ScienceResourceModule.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <None Include="config.cfg" />
+  </ItemGroup>
 </Project>
