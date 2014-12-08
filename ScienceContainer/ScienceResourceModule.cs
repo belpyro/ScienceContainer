@@ -42,10 +42,18 @@ namespace ScienceContainer
 
         public override void OnStart(StartState state)
         {
+            if (!IsOn) return;
+
             base.OnStart(state);
 
             if (state == StartState.Editor || vessel == null)
                 return;
+
+            var currentModules = vessel.Parts.SelectMany(x => x.Modules.OfType<ScienceResourceModule>()).ToList();
+
+            currentModules.Remove(this);
+
+            currentModules.ForEach(x => x.IsOn = false);
 
             var modules = vessel.Parts.SelectMany(x => x.Modules.OfType<ModuleScienceExperiment>()).ToList();
 
