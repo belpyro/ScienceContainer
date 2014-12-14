@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace ScienceContainer
     {
         private readonly Dictionary<string, ModuleResource> _resources = new Dictionary<string, ModuleResource>();
 
-        public bool IsOn { get; set; }
+        public bool IsOn;
 
         public override void OnAwake()
         {
@@ -23,7 +24,23 @@ namespace ScienceContainer
             {
                 _resources.Clear();
 
-                var data = GameDatabase.Instance.GetConfigNode("SirDargon/ScienceContainers/Plugins/config/PROP");
+                string modulePath;
+
+                try
+                {
+                    modulePath = Path.GetDirectoryName(Assembly.GetAssembly(typeof(ScienceResourceModule)).Location);
+
+                    modulePath = Path.Combine(modulePath, "config.cfg");
+                }
+                catch (Exception ex)
+                {
+                    IsOn = false;
+                    Debug.LogException(ex);
+                    return;
+                }
+
+                var data = ConfigNode.Load(modulePath);
+
                 var items = data.GetNodes("DATA");
                 foreach (var item in items)
                 {

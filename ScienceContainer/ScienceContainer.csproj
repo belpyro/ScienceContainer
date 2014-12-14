@@ -15,7 +15,7 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
+    <OutputPath>..\..\..\KSP_Dev\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -24,7 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>True</Optimize>
-    <OutputPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
+    <OutputPath>..\..\..\KSP_Dev\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
