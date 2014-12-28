@@ -9,7 +9,7 @@ namespace ScienceContainer
 {
     public class ScienceResourceModule : PartModule
     {
-        private readonly Dictionary<string, ModuleResource> _resources = new Dictionary<string, ModuleResource>();
+        private readonly Dictionary<string, List<ModuleResource>> _resources = new Dictionary<string, List<ModuleResource>>();
 
         public bool IsOn;
 
@@ -45,11 +45,22 @@ namespace ScienceContainer
                 foreach (var item in items)
                 {
                     var key = item.GetValue("experimentId");
-                    var value = new ModuleResource();
-                    
-                    value.Load(item.GetNode("RESOURCE"));
+                    var resourceList = new List<ModuleResource>();
 
-                    _resources.Add(key, value);
+                    var resourceNodes = item.GetNodes("RESOURCE");
+
+                    Debug.LogWarning(resourceNodes.ToString());
+
+                    foreach (var resourceNode in resourceNodes)
+                    {
+                        var value = new ModuleResource();
+                        value.Load(resourceNode);
+                        resourceList.Add(value);
+                    }
+
+                    resourceList.ForEach(x => Debug.LogWarning(string.Format("resource is id {0} amount {1}", x.id, x.amount)));
+
+                    _resources.Add(key, resourceList);
                 }
             }
             catch (Exception)
@@ -90,9 +101,9 @@ namespace ScienceContainer
 
         private void AttachModuleEvent(ModuleScienceExperiment module)
         {
-            ModuleResource resource;
+            List<ModuleResource> resources;
 
-            if (!_resources.TryGetValue(module.experimentID, out resource)) return;
+            if (!_resources.TryGetValue(module.experimentID, out resources) || !resources.Any()) return;
 
             var deployEvent = module.Events["DeployExperiment"];
 
@@ -102,11 +113,14 @@ namespace ScienceContainer
 
             var resEvent = new BaseEvent(module.Events, "DeployExperiment", new BaseEventDelegate(
                 () =>
-                {
-                    var amount = this.part.RequestResource(resource.id, resource.amount);
-                    if (amount >= resource.amount)
+                {                   
+                    foreach (var resource in resources)
                     {
-                        if (propDelegate != null) propDelegate.Invoke();
+                        var amount = this.part.RequestResource(resource.id, resource.amount);
+                        if (amount >= resource.amount)
+                        {
+                            if (propDelegate != null) propDelegate.Invoke();
+                        }
                     }
                 }
                 ))
