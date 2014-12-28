@@ -49,16 +49,12 @@ namespace ScienceContainer
 
                     var resourceNodes = item.GetNodes("RESOURCE");
 
-                    Debug.LogWarning(resourceNodes.ToString());
-
                     foreach (var resourceNode in resourceNodes)
                     {
                         var value = new ModuleResource();
                         value.Load(resourceNode);
                         resourceList.Add(value);
                     }
-
-                    resourceList.ForEach(x => Debug.LogWarning(string.Format("resource is id {0} amount {1}", x.id, x.amount)));
 
                     _resources.Add(key, resourceList);
                 }

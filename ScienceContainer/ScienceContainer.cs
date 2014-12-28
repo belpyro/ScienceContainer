@@ -33,8 +33,6 @@ namespace ScienceContainer
 
             if (state == StartState.Editor) return;
 
-            Debug.LogWarning(string.Format("Intake resource is {0} {1}", _intake_resource.id, _intake_resource.amount));
-
             if (part == null || _intake_resource.amount <= 0 || _intake_resource.id <= 0) return;
 
             StartCoroutine("IntakeResource");
