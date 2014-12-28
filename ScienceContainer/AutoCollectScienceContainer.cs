@@ -13,17 +13,9 @@ namespace ScienceContainer {
 			Events["togglePrompt"].active = false;
 		}
 
-		public override void OnLoad(ConfigNode node) {
-			base.OnLoad(node);
-		}
-
-		public override void OnSave(ConfigNode node) {
-			base.OnSave(node);
-		}
-
 		public override void OnUpdate() {
 			base.OnUpdate();
-			if(autoCollectEnabled && scienceCapacity > 0) {
+			if(!isDisabled && autoCollectEnabled && scienceCapacity > 0) {
 				autoCollectData();
 			}
 		}

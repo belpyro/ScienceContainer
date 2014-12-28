@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,16 +11,35 @@ namespace ScienceContainer
 
         #region KSP Fields
 
+        [KSPField(isPersistant = true)]
+        public ModuleResource _intake_resource = new ModuleResource();
+
         [KSPField(guiActive = true, guiName = "Warning Prompt Suppressed", isPersistant = true)]
         protected bool suppressPrompt = false;
 
         [KSPField(guiActive = true, guiName = "Available space", guiActiveEditor = true, guiUnits = "Mb",
             isPersistant = true)]
-        public float scienceCapacity = 100; 
+        public float scienceCapacity = 100;
+
+        protected bool isDisabled = false;
 
         #endregion
 
         /* Overriden PartModule Methods */
+
+        public override void OnStart(StartState state)
+        {
+            base.OnStart(state);
+
+            if (state == StartState.Editor) return;
+
+            Debug.LogWarning(string.Format("Intake resource is {0} {1}", _intake_resource.id, _intake_resource.amount));
+
+            if (part == null || _intake_resource.amount <= 0 || _intake_resource.id <= 0) return;
+
+            StartCoroutine("IntakeResource");
+
+        }
 
 
         public override void OnLoad(ConfigNode node)
@@ -33,6 +53,12 @@ namespace ScienceContainer
             if (node.HasValue("scienceCapacity"))
             {
                 scienceCapacity = float.Parse(node.GetValue("scienceCapacity"));
+            }
+
+            if (node.HasNode("RESOURCE_INTAKE"))
+            {
+                var resourceNode = node.GetNode("RESOURCE_INTAKE");
+                _intake_resource.Load(resourceNode);
             }
 
             updateMenu();
@@ -62,6 +88,31 @@ namespace ScienceContainer
                 }
                 Events["storeDataEVA"].active = i > 0;
                 Events["storeDataEVA"].guiName = "Store Data (" + i + ")";
+            }
+        }
+
+        private IEnumerator IntakeResource()
+        {
+            while (true)
+            {
+                var result = part.RequestResource(_intake_resource.id, _intake_resource.amount);
+
+                if (result <= 0 || result < _intake_resource.amount)
+                {
+                    if (!isDisabled)
+                    {
+                        ChangeModuleEnabledState(false);
+                    }
+                }
+                else
+                {
+                    if (isDisabled)
+                    {
+                        ChangeModuleEnabledState(true);
+                    }
+                }
+
+                yield return new WaitForSeconds(1f);
             }
         }
 
@@ -135,7 +186,7 @@ namespace ScienceContainer
                 IScienceDataTransmitter transmitter = transList.First(t => t.CanTransmit());
                 if (transmitter != null)
                 {
-                    transmitter.TransmitData(new List<ScienceData> {data});
+                    transmitter.TransmitData(new List<ScienceData> { data });
                     scienceCapacity += data.dataAmount;
                     storedData.Remove(data);
                     updateMenu();
@@ -179,7 +230,7 @@ namespace ScienceContainer
             ReviewDataItem(data);
         }
 
-            
+
         /* Events */
 
         [KSPEvent(name = "collectDataManually", active = true, guiActive = true, guiName = "Collect Data")]
@@ -202,7 +253,7 @@ namespace ScienceContainer
         {
             List<ModuleScienceContainer> EVACont =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            if (EVACont.FirstOrDefault().StoreData(new List<IScienceDataContainer> {this}, false))
+            if (EVACont.FirstOrDefault().StoreData(new List<IScienceDataContainer> { this }, false))
             {
                 foreach (ScienceData data in storedData)
                 {
@@ -335,7 +386,7 @@ namespace ScienceContainer
             ScienceData lastData = null;
 
             containers.RemoveAll(
-                x => x.GetType() == typeof (ScienceContainer) || x.GetType() == typeof (AutoCollectScienceContainer));
+                x => x.GetType() == typeof(ScienceContainer) || x.GetType() == typeof(AutoCollectScienceContainer));
 
             foreach (IScienceDataContainer c in containers)
             {
@@ -366,8 +417,7 @@ namespace ScienceContainer
             if (scienceCapacity < 0) scienceCapacity = 0;
 
             return true;
-        }
-
+        } 
 
         protected void onTransferRerunnable(List<IScienceDataContainer> containers)
         {
@@ -375,7 +425,7 @@ namespace ScienceContainer
             ScienceData lastData = null;
             foreach (IScienceDataContainer c in containers)
             {
-                if ((ScienceContainer) c != this)
+                if ((ScienceContainer)c != this)
                 {
                     ScienceData[] data = c.GetData();
                     if (c.IsRerunnable())
@@ -411,6 +461,17 @@ namespace ScienceContainer
                     ScreenMessageStyle.UPPER_LEFT);
             }
             updateMenu();
+        }
+
+        protected virtual void ChangeModuleEnabledState(bool flag)
+        {
+            Events["collectDataManually"].active = flag;
+            Events["storeDataEVA"].active = flag;
+            Events["collectDataEVA"].active = flag;
+
+            Actions["collectDataAction"].active = flag;
+
+            isDisabled = !flag;
         }
 
 
