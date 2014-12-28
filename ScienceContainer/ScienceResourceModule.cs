@@ -46,6 +46,7 @@ namespace ScienceContainer
                 {
                     var key = item.GetValue("experimentId");
                     var value = new ModuleResource();
+                    
                     value.Load(item.GetNode("RESOURCE"));
 
                     _resources.Add(key, value);

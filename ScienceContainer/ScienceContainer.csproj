@@ -15,7 +15,7 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>..\..\..\KSP_Dev\GameData\SirDargon\ScienceContainers\Plugins</OutputPath>
+    <OutputPath>..\..\..\KSP_Dev_90\GameData\ScienceContainer\</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,20 +30,16 @@
     <ConsolePause>False</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\packages\KSP_Mods_090.1.0.0\lib\net35\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data" />
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\KSP_Dev_25\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ConfigurableScienceData">
-      <HintPath>..\..\..\KSP_Dev_25\GameData\SirDargon\ConfigurableScienceData\Plugins\ConfigurableScienceData.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\KSP_Dev_25\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\packages\KSP_Mods_090.1.0.0\lib\net35\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -58,5 +54,6 @@
     <None Include="config.cfg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

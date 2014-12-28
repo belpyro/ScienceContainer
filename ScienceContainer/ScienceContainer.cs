@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using ConfigurableScienceData;
 using UnityEngine;
 
 namespace ScienceContainer
@@ -9,43 +8,26 @@ namespace ScienceContainer
     {
         protected List<ScienceData> storedData = new List<ScienceData>();
 
+        #region KSP Fields
+
+        [KSPField(guiActive = true, guiName = "Warning Prompt Suppressed", isPersistant = true)]
+        protected bool suppressPrompt = false;
+
+        [KSPField(guiActive = true, guiName = "Available space", guiActiveEditor = true, guiUnits = "Mb",
+            isPersistant = true)]
+        public float scienceCapacity = 100; 
+
+        #endregion
+
         /* Overriden PartModule Methods */
 
-        public override void OnStart(StartState state)
-        {
-            base.OnStart(state);
-#if DEBUG
-            //var module = part.AddModule("ScienceResourceModule");
-#endif
-        }
-
-        public string GetModuleTitle()
-        {
-            return "Science container";
-        }
-
-        public override string GetInfo()
-        {
-            return string.Format("Available space {0} Mb", scienceCapacity);
-        }
-
-        public Callback<Rect> GetDrawModulePanelCallback()
-        {
-            return null;
-        }
-
-        public string GetPrimaryField()
-        {
-            return string.Format("<b><color=#7fc9ffff>Available space {0} Mb</color></b>", scienceCapacity);
-            ;
-        }
 
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
             foreach (ConfigNode dataNode in node.GetNodes("ScienceData"))
             {
-                storedData.Add(new CfgScienceData(dataNode));
+                storedData.Add(new ScienceData(dataNode));
             }
 
             if (node.HasValue("scienceCapacity"))
@@ -60,9 +42,9 @@ namespace ScienceContainer
         {
             base.OnSave(node);
             node.RemoveNodes("ScienceData");
-            foreach (CfgScienceData data in storedData)
+            foreach (ScienceData data in storedData)
             {
-                data.Save((ConfigNode) node.AddNode("ScienceData"));
+                data.Save(node.AddNode("ScienceData"));
             }
         }
 
@@ -93,7 +75,7 @@ namespace ScienceContainer
         public void DumpData(ScienceData data)
         {
             scienceCapacity += data.dataAmount;
-            storedData.Remove((CfgScienceData) data);
+            storedData.Remove(data);
             updateMenu();
         }
 
@@ -111,11 +93,11 @@ namespace ScienceContainer
                 part,
                 data,
                 data.transmitValue,
-                ModuleCfgScienceLab.GetBoostForVesselData(part.vessel, (CfgScienceData) data),
+                ModuleScienceLab.GetBoostForVesselData(part.vessel, data),
                 false,
                 "",
                 false,
-                data.labBoost < 1 && vessel.FindPartModulesImplementing<ModuleCfgScienceLab>().Count > 0 &&
+                data.labBoost < 1 && vessel.FindPartModulesImplementing<ModuleScienceLab>().Any() &&
                 ModuleScienceLab.IsLabData(data),
                 new Callback<ScienceData>(onDiscardData),
                 new Callback<ScienceData>(onKeepData),
@@ -155,7 +137,7 @@ namespace ScienceContainer
                 {
                     transmitter.TransmitData(new List<ScienceData> {data});
                     scienceCapacity += data.dataAmount;
-                    storedData.Remove((CfgScienceData) data);
+                    storedData.Remove(data);
                     updateMenu();
                 }
                 else
@@ -172,14 +154,13 @@ namespace ScienceContainer
 
         public void onSendDataToLab(ScienceData data)
         {
-            List<ModuleCfgScienceLab> labList = vessel.FindPartModulesImplementing<ModuleCfgScienceLab>();
+            List<ModuleScienceLab> labList = vessel.FindPartModulesImplementing<ModuleScienceLab>();
             if (labList.Count > 0)
             {
-                ModuleCfgScienceLab lab = labList.FirstOrDefault(l => l.IsOperational());
+                var lab = labList.FirstOrDefault(l => l.IsOperational());
                 if (lab != null)
                 {
-                    lab.StartCoroutine(labList.FirstOrDefault()
-                        .ProcessData((CfgScienceData) data, new Callback<ScienceData>(onLabComplete)));
+                    lab.StartCoroutine(labList.FirstOrDefault().ProcessData(data, onLabComplete));
                 }
                 else
                 {
@@ -198,15 +179,7 @@ namespace ScienceContainer
             ReviewDataItem(data);
         }
 
-        /* Fields */
-
-        [KSPField(guiActive = true, guiName = "Warning Prompt Suppressed", isPersistant = true)]
-        protected bool suppressPrompt = false;
-
-        [KSPField(guiActive = true, guiName = "Available space", guiActiveEditor = true, guiUnits = "Mb",
-            isPersistant = true)]
-        public float scienceCapacity = 100;
-
+            
         /* Events */
 
         [KSPEvent(name = "collectDataManually", active = true, guiActive = true, guiName = "Collect Data")]
@@ -255,7 +228,7 @@ namespace ScienceContainer
                     if (d != null)
                     {
                         lastData = d;
-                        storedData.Add((CfgScienceData) d);
+                        storedData.Add(d);
                         c.DumpData(d);
                         numberOfData++;
                     }
@@ -372,7 +345,7 @@ namespace ScienceContainer
                 {
                     if (!CheckCapacity(d)) return;
                     lastData = d;
-                    storedData.Add(new CfgScienceData(d));
+                    storedData.Add(d);
                     numberOfData++;
                     c.DumpData(d);
                 }
@@ -402,7 +375,7 @@ namespace ScienceContainer
             ScienceData lastData = null;
             foreach (IScienceDataContainer c in containers)
             {
-                if (c != (IScienceDataContainer) this)
+                if ((ScienceContainer) c != this)
                 {
                     ScienceData[] data = c.GetData();
                     if (c.IsRerunnable())
@@ -413,7 +386,7 @@ namespace ScienceContainer
                             {
                                 if (!CheckCapacity(d)) return;
                                 lastData = d;
-                                storedData.Add(new CfgScienceData(d));
+                                storedData.Add(d);
                                 numberOfData++;
                                 c.DumpData(d);
                             }
@@ -439,5 +412,30 @@ namespace ScienceContainer
             }
             updateMenu();
         }
+
+
+        #region IModuleInfo
+
+        public string GetModuleTitle()
+        {
+            return "Science container";
+        }
+
+        public override string GetInfo()
+        {
+            return string.Format("Available space {0} Mb", scienceCapacity);
+        }
+
+        public Callback<Rect> GetDrawModulePanelCallback()
+        {
+            return null;
+        }
+
+        public string GetPrimaryField()
+        {
+            return string.Format("<b><color=#7fc9ffff>Available space {0} Mb</color></b>", scienceCapacity);
+        }
+
+        #endregion
     }
 }
