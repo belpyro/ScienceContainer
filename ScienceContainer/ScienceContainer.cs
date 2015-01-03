@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,9 @@ namespace ScienceContainer
     public class ScienceContainer : PartModule, IScienceDataContainer, IModuleInfo
     {
         protected List<ScienceData> storedData = new List<ScienceData>();
+
+        [KSPField(isPersistant = true)]
+        public string _ignoredExperiments;
 
         #region KSP Fields
 
@@ -59,6 +63,18 @@ namespace ScienceContainer
                 _intake_resource.Load(resourceNode);
             }
 
+            if (node.HasValue("ignore"))
+            {
+                try
+                {
+                    _ignoredExperiments = node.GetValue("ignore");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+
             updateMenu();
         }
 
@@ -95,10 +111,11 @@ namespace ScienceContainer
             {
                 var result = part.RequestResource(_intake_resource.id, _intake_resource.amount);
 
-                if (result <= 0 || result < _intake_resource.amount)
+                if (result <= 0d || Math.Abs(result - _intake_resource.amount) > 0.001)
                 {
                     if (!isDisabled)
                     {
+                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result, _intake_resource.amount));
                         ChangeModuleEnabledState(false);
                     }
                 }
@@ -106,6 +123,7 @@ namespace ScienceContainer
                 {
                     if (isDisabled)
                     {
+                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result, _intake_resource.amount));
                         ChangeModuleEnabledState(true);
                     }
                 }
@@ -392,6 +410,10 @@ namespace ScienceContainer
 
                 foreach (ScienceData d in data.Where(m => m != null))
                 {
+                    var subjectId = d.subjectID.Split('@').First();
+
+                    if (!string.IsNullOrEmpty(_ignoredExperiments) && _ignoredExperiments.Contains(subjectId)) continue;
+
                     if (!CheckCapacity(d)) return;
                     lastData = d;
                     storedData.Add(d);
@@ -399,6 +421,7 @@ namespace ScienceContainer
                     c.DumpData(d);
                 }
             }
+
             showMessages(numberOfData, lastData);
         }
 
@@ -415,33 +438,36 @@ namespace ScienceContainer
             if (scienceCapacity < 0) scienceCapacity = 0;
 
             return true;
-        } 
+        }
 
         protected void onTransferRerunnable(List<IScienceDataContainer> containers)
         {
             int numberOfData = 0;
             ScienceData lastData = null;
+
+            containers.RemoveAll(
+                x => x.GetType() == typeof(ScienceContainer) || x.GetType() == typeof(AutoCollectScienceContainer));
+
             foreach (IScienceDataContainer c in containers)
             {
-                if ((ScienceContainer)c != this)
+                ScienceData[] data = c.GetData();
+                if (c.IsRerunnable())
                 {
-                    ScienceData[] data = c.GetData();
-                    if (c.IsRerunnable())
+                    foreach (ScienceData d in data.Where(x => x != null))
                     {
-                        foreach (ScienceData d in data)
-                        {
-                            if (d != null)
-                            {
-                                if (!CheckCapacity(d)) return;
-                                lastData = d;
-                                storedData.Add(d);
-                                numberOfData++;
-                                c.DumpData(d);
-                            }
-                        }
+                        var subjectId = d.subjectID.Split('@').First();
+
+                        if (!string.IsNullOrEmpty(_ignoredExperiments) && _ignoredExperiments.Contains(subjectId)) continue;
+
+                        if (!CheckCapacity(d)) return;
+                        lastData = d;
+                        storedData.Add(d);
+                        numberOfData++;
+                        c.DumpData(d);
                     }
                 }
             }
+
             showMessages(numberOfData, lastData);
         }
 
