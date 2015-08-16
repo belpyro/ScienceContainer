@@ -165,7 +165,7 @@ namespace ScienceContainer
                 "",
                 false,
                 data.labBoost < 1 && vessel.FindPartModulesImplementing<ModuleScienceLab>().Any() &&
-                ModuleScienceLab.IsLabData(data),
+                ModuleScienceLab.IsLabData(vessel, data),
                 new Callback<ScienceData>(onDiscardData),
                 new Callback<ScienceData>(onKeepData),
                 new Callback<ScienceData>(onTransmitData),
