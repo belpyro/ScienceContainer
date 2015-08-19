@@ -1,0 +1,101 @@
+using System.Collections.Generic;
+
+namespace ScienceContainer.Container
+{
+    public class AutoCollectScienceContainer : ScienceContainer
+    {
+        /* IScienceDatacontainer Methods */
+
+        /* Experiment Result Dialog Page Callbacks */
+
+        /* Fields */
+
+        [KSPField(guiActive = false, isPersistant = true)] protected bool autoCollectEnabled;
+
+        [KSPField(guiActive = true, isPersistant = true, guiName = "Collect Nonrerunnable")] protected bool
+            autoCollectNonrerunnable;
+
+        /* Overriden PartModule Methods */
+
+        public override void OnStart(StartState state)
+        {
+            base.OnStart(state);
+            Events["togglePrompt"].active = false;
+        }
+
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+            if (!isDisabled && autoCollectEnabled && ScienceCapacity > 0)
+            {
+                autoCollectData();
+            }
+        }
+
+        /* Events */
+
+        [KSPEvent(name = "toggleCollectNonrerunnable", active = true, guiActive = true,
+            guiName = "Collect Nonrerunnable?")]
+        public void toggleCollectNonrerunnable()
+        {
+            autoCollectNonrerunnable = !autoCollectNonrerunnable;
+        }
+
+        [KSPEvent(name = "startAutoCollect", active = true, guiActive = true, guiName = "Start Auto-collect")]
+        public void startAutoCollect()
+        {
+            cancelAutoCollect();
+            autoCollectEnabled = true;
+            Events["stopAutoCollect"].guiActive = true;
+            Events["startAutoCollect"].guiActive = false;
+        }
+
+        [KSPEvent(name = "stopAutoCollect", active = true, guiActive = false, guiName = "Stop Auto-collect")]
+        public void stopAutoCollect()
+        {
+            autoCollectEnabled = false;
+            Events["stopAutoCollect"].guiActive = false;
+            Events["startAutoCollect"].guiActive = true;
+        }
+
+        /* Actions */
+
+        [KSPAction("Toggle Auto-collect")]
+        public void toggleAutoCollect(KSPActionParam param)
+        {
+            autoCollectEnabled = !autoCollectEnabled;
+        }
+
+        [KSPAction("Start Auto-collect")]
+        public void startAutoCollectAction(KSPActionParam param)
+        {
+            startAutoCollect();
+        }
+
+        [KSPAction("Stop Auto-collect")]
+        public void stopAutoCollectAction(KSPActionParam param)
+        {
+            stopAutoCollect();
+        }
+
+        /* Other Methods */
+
+        public bool isAutoCollectEnabled()
+        {
+            return autoCollectEnabled;
+        }
+
+        protected void autoCollectData()
+        {
+            List<IScienceDataContainer> containers = vessel.FindPartModulesImplementing<IScienceDataContainer>();
+            if (autoCollectNonrerunnable)
+            {
+                onTransferNonrerunnable(containers);
+            }
+            else
+            {
+                onTransferRerunnable(containers);
+            }
+        }
+    }
+}

@@ -10,6 +10,8 @@
     <RootNamespace>ScienceContainer</RootNamespace>
     <AssemblyName>ScienceContainer</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -19,15 +21,17 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>False</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <LangVersion>default</LangVersion>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>True</Optimize>
-    <OutputPath>$(KSP_PATH)GameData\ScienceContainer\</OutputPath>
+    <OutputPath>.\</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>False</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -53,15 +57,31 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="AutoCollectScienceContainer.cs" />
-    <Compile Include="ScienceContainer.cs" />
-    <Compile Include="ScienceResourceModule.cs" />
+    <Compile Include="Container\AutoCollectScienceContainer.cs" />
+    <Compile Include="Container\ScienceContainer.cs" />
+    <Compile Include="Container\ScienceContainerSM.cs" />
+    <Compile Include="Modules\ScienceResourceModule.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <None Include="model.mu">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="model000.dds">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="model001.dds">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="config.cfg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <None Include="container.cfg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  <PropertyGroup>
+    <PostBuildEvent>"$(MONO_PATH)pdb2mdb.bat" $(TargetPath)</PostBuildEvent>
+  </PropertyGroup>
 </Project>

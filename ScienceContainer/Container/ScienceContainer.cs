@@ -4,30 +4,62 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace ScienceContainer
+namespace ScienceContainer.Container
 {
-    public class ScienceContainer : PartModule, IScienceDataContainer, IModuleInfo
+    public partial class ScienceContainer : PartModule, IScienceDataContainer, IModuleInfo
     {
+        protected bool isDisabled;
         protected List<ScienceData> storedData = new List<ScienceData>();
+        /* IScienceDatacontainer Methods */
 
-        [KSPField(isPersistant = true)]
-        public string _ignoredExperiments;
+        public ScienceData[] GetData()
+        {
+            return storedData.ToArray();
+        }
 
-        #region KSP Fields
+        public void DumpData(ScienceData data)
+        {
+            ScienceCapacity += data.dataAmount;
+            storedData.Remove(data);
+            updateMenu();
+        }
 
-        [KSPField(isPersistant = true)]
-        public ModuleResource _intake_resource = new ModuleResource();
+        public void ReviewData()
+        {
+            foreach (ScienceData data in storedData)
+            {
+                ReviewDataItem(data);
+            }
+        }
 
-        [KSPField(guiActive = true, guiName = "Warning Prompt Suppressed", isPersistant = true)]
-        protected bool suppressPrompt = false;
+        public void ReviewDataItem(ScienceData data)
+        {
+            ExperimentResultDialogPage page = new ExperimentResultDialogPage(
+                part,
+                data,
+                data.transmitValue,
+                ModuleScienceLab.GetBoostForVesselData(part.vessel, data),
+                false,
+                "",
+                false,
+                data.labBoost < 1 && vessel.FindPartModulesImplementing<ModuleScienceLab>().Any() &&
+                ModuleScienceLab.IsLabData(vessel, data),
+                onDiscardData,
+                onKeepData,
+                onTransmitData,
+                onSendDataToLab);
+            ExperimentsResultDialog.DisplayResult(page);
+        }
 
-        [KSPField(guiActive = true, guiName = "Available space", guiActiveEditor = true, guiUnits = "Mb",
-            isPersistant = true)]
-        public float scienceCapacity = 100;
+        public int GetScienceCount()
+        {
+            return storedData.Count;
+        }
 
-        protected bool isDisabled = false;
-
-        #endregion
+        public bool IsRerunnable()
+        {
+            return true;
+        }
 
         /* Overriden PartModule Methods */
 
@@ -40,9 +72,7 @@ namespace ScienceContainer
             if (part == null || _intake_resource.amount <= 0 || _intake_resource.id <= 0) return;
 
             StartCoroutine("IntakeResource");
-
         }
-
 
         public override void OnLoad(ConfigNode node)
         {
@@ -54,7 +84,7 @@ namespace ScienceContainer
 
             if (node.HasValue("scienceCapacity"))
             {
-                scienceCapacity = float.Parse(node.GetValue("scienceCapacity"));
+                ScienceCapacity = float.Parse(node.GetValue("scienceCapacity"));
             }
 
             if (node.HasNode("RESOURCE_INTAKE"))
@@ -67,7 +97,7 @@ namespace ScienceContainer
             {
                 try
                 {
-                    _ignoredExperiments = node.GetValue("ignore");
+                    IgnoredExperiments = node.GetValue("ignore");
                 }
                 catch (Exception ex)
                 {
@@ -115,7 +145,8 @@ namespace ScienceContainer
                 {
                     if (!isDisabled)
                     {
-                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result, _intake_resource.amount));
+                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result,
+                            _intake_resource.amount));
                         ChangeModuleEnabledState(false);
                     }
                 }
@@ -123,64 +154,14 @@ namespace ScienceContainer
                 {
                     if (isDisabled)
                     {
-                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result, _intake_resource.amount));
+                        Debug.LogWarning(string.Format("IsDisabled {0} result is {1} amount is {2}", isDisabled, result,
+                            _intake_resource.amount));
                         ChangeModuleEnabledState(true);
                     }
                 }
 
                 yield return new WaitForSeconds(1f);
             }
-        }
-
-        /* IScienceDatacontainer Methods */
-
-        public ScienceData[] GetData()
-        {
-            return storedData.ToArray();
-        }
-
-        public void DumpData(ScienceData data)
-        {
-            scienceCapacity += data.dataAmount;
-            storedData.Remove(data);
-            updateMenu();
-        }
-
-        public void ReviewData()
-        {
-            foreach (ScienceData data in storedData)
-            {
-                ReviewDataItem(data);
-            }
-        }
-
-        public void ReviewDataItem(ScienceData data)
-        {
-            ExperimentResultDialogPage page = new ExperimentResultDialogPage(
-                part,
-                data,
-                data.transmitValue,
-                ModuleScienceLab.GetBoostForVesselData(part.vessel, data),
-                false,
-                "",
-                false,
-                data.labBoost < 1 && vessel.FindPartModulesImplementing<ModuleScienceLab>().Any() &&
-                ModuleScienceLab.IsLabData(vessel, data),
-                new Callback<ScienceData>(onDiscardData),
-                new Callback<ScienceData>(onKeepData),
-                new Callback<ScienceData>(onTransmitData),
-                new Callback<ScienceData>(onSendDataToLab));
-            ExperimentsResultDialog.DisplayResult(page);
-        }
-
-        public int GetScienceCount()
-        {
-            return storedData.Count;
-        }
-
-        public bool IsRerunnable()
-        {
-            return true;
         }
 
         /* Experiment Result Dialog Page Callbacks */
@@ -202,8 +183,8 @@ namespace ScienceContainer
                 IScienceDataTransmitter transmitter = transList.First(t => t.CanTransmit());
                 if (transmitter != null)
                 {
-                    transmitter.TransmitData(new List<ScienceData> { data });
-                    scienceCapacity += data.dataAmount;
+                    transmitter.TransmitData(new List<ScienceData> {data});
+                    ScienceCapacity += data.dataAmount;
                     storedData.Remove(data);
                     updateMenu();
                 }
@@ -246,7 +227,6 @@ namespace ScienceContainer
             ReviewDataItem(data);
         }
 
-
         /* Events */
 
         [KSPEvent(name = "collectDataManually", active = true, guiActive = true, guiName = "Collect Data")]
@@ -269,7 +249,7 @@ namespace ScienceContainer
         {
             List<ModuleScienceContainer> EVACont =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-            if (EVACont.FirstOrDefault().StoreData(new List<IScienceDataContainer> { this }, false))
+            if (EVACont.FirstOrDefault().StoreData(new List<IScienceDataContainer> {this}, false))
             {
                 foreach (ScienceData data in storedData)
                 {
@@ -336,8 +316,8 @@ namespace ScienceContainer
             Events["reviewStoredData"].guiActive = storedData.Count > 0;
             Events["reviewStoredData"].guiName = "Review Data (" + storedData.Count + ")";
 
-            Events["collectDataManually"].guiActive = Events["collectDataManually"].active = scienceCapacity > 0;
-            Events["collectDataEVA"].externalToEVAOnly = Events["collectDataEVA"].active = scienceCapacity > 0;
+            Events["collectDataManually"].guiActive = Events["collectDataManually"].active = ScienceCapacity > 0;
+            Events["collectDataEVA"].externalToEVAOnly = Events["collectDataEVA"].active = ScienceCapacity > 0;
         }
 
         protected void cancelAutoCollect()
@@ -355,7 +335,7 @@ namespace ScienceContainer
 
         protected void collectData()
         {
-            if (scienceCapacity <= 0)
+            if (ScienceCapacity <= 0)
                 return;
 
             List<IScienceDataContainer> containers = vessel.FindPartModulesImplementing<IScienceDataContainer>();
@@ -388,9 +368,9 @@ namespace ScienceContainer
         {
             DialogOption[] dialog = new DialogOption[2];
             dialog[0] = new DialogOption<List<IScienceDataContainer>>("Transfer All Science",
-                new Callback<List<IScienceDataContainer>>(onTransferNonrerunnable), containers);
+                onTransferNonrerunnable, containers);
             dialog[1] = new DialogOption<List<IScienceDataContainer>>("Transfer Rerunnable Science Only",
-                new Callback<List<IScienceDataContainer>>(onTransferRerunnable), containers);
+                onTransferRerunnable, containers);
             PopupDialog.SpawnPopupDialog(
                 new MultiOptionDialog("Transfering science from nonrerunnable parts will cause them to be inoperable.",
                     "Warning", HighLogic.Skin, dialog), false, HighLogic.Skin);
@@ -402,7 +382,7 @@ namespace ScienceContainer
             ScienceData lastData = null;
 
             containers.RemoveAll(
-                x => x.GetType() == typeof(ScienceContainer) || x.GetType() == typeof(AutoCollectScienceContainer));
+                x => x.GetType() == typeof (ScienceContainer) || x.GetType() == typeof (AutoCollectScienceContainer));
 
             foreach (IScienceDataContainer c in containers)
             {
@@ -412,7 +392,7 @@ namespace ScienceContainer
                 {
                     var subjectId = d.subjectID.Split('@').First();
 
-                    if (!string.IsNullOrEmpty(_ignoredExperiments) && _ignoredExperiments.Contains(subjectId)) continue;
+                    if (!string.IsNullOrEmpty(IgnoredExperiments) && IgnoredExperiments.Contains(subjectId)) continue;
 
                     if (!CheckCapacity(d)) return;
                     lastData = d;
@@ -427,15 +407,15 @@ namespace ScienceContainer
 
         protected virtual bool CheckCapacity(ScienceData data)
         {
-            if (scienceCapacity < data.dataAmount)
+            if (ScienceCapacity < data.dataAmount)
             {
                 ScreenMessages.PostScreenMessage("<color=#FF1C23FF>Not enough free space on disk</color>", 6f,
                     ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
 
-            scienceCapacity -= data.dataAmount;
-            if (scienceCapacity < 0) scienceCapacity = 0;
+            ScienceCapacity -= data.dataAmount;
+            if (ScienceCapacity < 0) ScienceCapacity = 0;
 
             return true;
         }
@@ -446,7 +426,7 @@ namespace ScienceContainer
             ScienceData lastData = null;
 
             containers.RemoveAll(
-                x => x.GetType() == typeof(ScienceContainer) || x.GetType() == typeof(AutoCollectScienceContainer));
+                x => x.GetType() == typeof (ScienceContainer) || x.GetType() == typeof (AutoCollectScienceContainer));
 
             foreach (IScienceDataContainer c in containers)
             {
@@ -457,7 +437,8 @@ namespace ScienceContainer
                     {
                         var subjectId = d.subjectID.Split('@').First();
 
-                        if (!string.IsNullOrEmpty(_ignoredExperiments) && _ignoredExperiments.Contains(subjectId)) continue;
+                        if (!string.IsNullOrEmpty(IgnoredExperiments) && IgnoredExperiments.Contains(subjectId))
+                            continue;
 
                         if (!CheckCapacity(d)) return;
                         lastData = d;
@@ -475,13 +456,13 @@ namespace ScienceContainer
         {
             if (numberOfData == 1)
             {
-                ScreenMessages.PostScreenMessage(lastData.title + " transferred to " + base.part.partInfo.title + ".",
+                ScreenMessages.PostScreenMessage(lastData.title + " transferred to " + part.partInfo.title + ".",
                     4f, ScreenMessageStyle.UPPER_LEFT);
             }
             else if (numberOfData > 1)
             {
                 ScreenMessages.PostScreenMessage(
-                    numberOfData + " science reports transferred to " + base.part.partInfo.title + ".", 4f,
+                    numberOfData + " science reports transferred to " + part.partInfo.title + ".", 4f,
                     ScreenMessageStyle.UPPER_LEFT);
             }
             updateMenu();
@@ -498,6 +479,19 @@ namespace ScienceContainer
             isDisabled = !flag;
         }
 
+        #region KSP Fields
+
+        [KSPField(isPersistant = true)] public string IgnoredExperiments;
+
+        [KSPField(isPersistant = true)] public ModuleResource _intake_resource = new ModuleResource();
+
+        [KSPField(guiActive = true, guiName = "Warning Prompt Suppressed", isPersistant = true)] protected bool
+            suppressPrompt;
+
+        [KSPField(guiActive = true, guiName = "Available space", guiActiveEditor = true, guiUnits = "Mb",
+            isPersistant = true)] public float ScienceCapacity = 100;
+
+        #endregion
 
         #region IModuleInfo
 
@@ -508,7 +502,7 @@ namespace ScienceContainer
 
         public override string GetInfo()
         {
-            return string.Format("Available space {0} Mb", scienceCapacity);
+            return string.Format("Available space {0} Mb", ScienceCapacity);
         }
 
         public Callback<Rect> GetDrawModulePanelCallback()
@@ -518,7 +512,7 @@ namespace ScienceContainer
 
         public string GetPrimaryField()
         {
-            return string.Format("<b><color=#7fc9ffff>Available space {0} Mb</color></b>", scienceCapacity);
+            return string.Format("<b><color=#7fc9ffff>Available space {0} Mb</color></b>", ScienceCapacity);
         }
 
         #endregion
